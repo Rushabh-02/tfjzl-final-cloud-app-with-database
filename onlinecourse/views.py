@@ -86,7 +86,15 @@ class CourseListView(generic.ListView):
 
 class CourseDetailView(generic.DetailView):
     model = Course
-    template_name = 'onlinecourse/course_detail_bootstrap.html'
+    template_name = 'onlinecourse/course_details_bootstrap.html'
+    context_object_name = 'course'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['exams'] = self.object.exam_set.prefetch_related(
+            'questions__choices'
+        ).all()
+        return context
 
 
 def enroll(request, course_id):
@@ -171,7 +179,7 @@ def show_exam_result(request, course_id, submission_id):
             .values_list('id', flat=True)
         )
 
-        is_correct = bool(correct_ids) and question_selected_ids == correct_ids
+        is_correct = question.is_get_score(question_selected_ids)
 
         if is_correct:
             score += question.grade

@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from .models import (
     Course,
@@ -42,11 +43,6 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ['question_text', 'course', 'grade']
 
 
-class ExamAdmin(admin.ModelAdmin):
-    inlines = [QuestionInline]
-    list_display = ['name', 'course']
-
-
 class InstructorAdmin(admin.ModelAdmin):
     list_display = ['user', 'full_time', 'total_learners']
 
@@ -59,7 +55,6 @@ admin.site.register(Course, CourseAdmin)
 admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Instructor, InstructorAdmin)
 admin.site.register(Learner, LearnerAdmin)
-admin.site.register(Exam, ExamAdmin)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Choice)
 admin.site.register(Submission)

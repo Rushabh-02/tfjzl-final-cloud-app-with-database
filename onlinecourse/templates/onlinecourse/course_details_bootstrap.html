@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{ course.name }}</title>
+
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">
+                Home
+            </a>
+
+            <ul class="nav navbar-nav navbar-right">
+                {% if user.is_authenticated %}
+                    <li>
+                        <span class="navbar-text">
+                            {{ user.first_name }} ({{ user.username }})
+                        </span>
+                        <a class="btn btn-link"
+                           href="{% url 'onlinecourse:logout' %}">
+                            Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li>
+                        <form class="form-inline"
+                              action="{% url 'onlinecourse:login' %}"
+                              method="post">
+                            {% csrf_token %}
+                            <input type="text"
+                                   class="form-control mr-2"
+                                   placeholder="Username"
+                                   name="username"
+                                   required>
+
+                            <input type="password"
+                                   class="form-control mr-2"
+                                   placeholder="Password"
+                                   name="psw"
+                                   required>
+
+                            <button class="btn btn-primary" type="submit">
+                                Login
+                            </button>
+
+                            <a class="btn btn-link"
+                               href="{% url 'onlinecourse:registration' %}">
+                                Sign Up
+                            </a>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Course details and lessons -->
+    <main class="container-fluid mt-4">
+        <h2>{{ course.name }}</h2>
+
+        <div class="card-columns-vertical">
+            {% for lesson in course.lesson_set.all %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>
+                            Lesson {{ lesson.order|add:1 }}: {{ lesson.title }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{ lesson.content }}
+                    </div>
+                </div>
+            {% empty %}
+                <p>No lessons are available for this course yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Exams and questions -->
+        {% for exam in exams %}
+            <div class="card mt-4 mb-4">
+                <div class="card-header">
+                    <h4>{{ exam.name }}</h4>
+                    <p class="mb-0">{{ exam.description }}</p>
+                </div>
+
+                <div class="card-body">
+                    <form method="post"
+                          action="{% url 'onlinecourse:submit' course.id %}">
+                        {% csrf_token %}
+
+                        {% for question in exam.questions.all %}
+                            <div class="mb-4">
+                                <p>
+                                    <strong>Question {{ forloop.counter }}:</strong>
+                                    {{ question.question_text }}
+                                </p>
+
+                                {% for choice in question.choices.all %}
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="choice_{{ question.id }}"
+                                               id="choice_{{ choice.id }}"
+                                               value="{{ choice.id }}"
+                                               required>
+
+                                        <label class="form-check-label"
+                                               for="choice_{{ choice.id }}">
+                                            {{ choice.choice_text }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% empty %}
+                            <p>No questions are available for this exam.</p>
+                        {% endfor %}
+
+                        {% if user.is_authenticated %}
+                            {% if course.is_enrolled or user.is_staff %}
+                                <button type="submit" class="btn btn-primary">
+                                    Submit Exam
+                                </button>
+                            {% else %}
+                                <p>Please enroll in this course before submitting the exam.</p>
+                                <a class="btn btn-primary"
+                                   href="{% url 'onlinecourse:enroll' course.id %}">
+                                    Enroll
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <p>Please log in to submit the exam.</p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        {% empty %}
+            <p class="mt-4">No exams are available for this course yet.</p>
+        {% endfor %}
+    </main>
+</body>
+</html>
